@@ -491,7 +491,8 @@ class ExpandedEntry(Gtk.EventBox):
 
         old_title = self._metadata.get('title', None)
         new_title = self._title.get_text()
-        if old_title != new_title:
+        if old_title != new_title and not new_title.isspace() \
+                and not new_title == '':
             self._icon.palette.props.primary_text = new_title
             self._metadata['title'] = new_title
             self._metadata['title_set_by_user'] = '1'
