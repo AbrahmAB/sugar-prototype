@@ -36,6 +36,11 @@ from jarabe.journal.journaltoolbox import MainToolbox
 from jarabe.journal.journaltoolbox import DetailToolbox
 from jarabe.journal.journaltoolbox import EditToolbox
 
+#Prototype code starts ---
+#from jarabe.journal.listview import ThumbnailView
+from jarabe.journal.iconview import IconView
+#Prototype code ends ---
+
 from jarabe.journal.listview import ListView
 from jarabe.journal.detailview import DetailView
 from jarabe.journal.volumestoolbar import VolumesToolbar
@@ -191,11 +196,18 @@ class JournalActivity(JournalWindow):
         self._mount_point = '/'
         self._main_view_active = True
 
+        #Prototype code starts ---
+        self._third_view = None
+        self._icon_view = None
+        self._main1_toolbox = None
+        #Prototype code ends ---
         self._editing_mode = False
-
+      
         self._setup_main_view()
         self._setup_secondary_view()
-
+        #Prototype code starts ---
+        self._setup_thumbnail_view()
+        #Prototype code ends ---
         self.add_events(Gdk.EventMask.ALL_EVENTS_MASK)
         self._realized_sid = self.connect('realize', self.__realize_cb)
         self.connect('window-state-event', self.__window_state_event_cb)
@@ -240,8 +252,39 @@ class JournalActivity(JournalWindow):
     def can_close(self):
         return False
 
+    #Prototype code starts ---
+    def _setup_thumbnail_view(self):
+        self._main1_toolbox = MainToolbox()
+        #self._main1_toolbox._iconview_button.set_active(True)
+        self._edit_toolbox = EditToolbox(self)
+        self._third_view = Gtk.VBox()
+        self._third_view.set_can_focus(True)
+
+        self._icon_view = IconView(self._main1_toolbox)
+        
+        #self._icon_view.connect('item-activated', self.__item_activated_cb)
+        self._icon_view.connect('clear-clicked', self.__clear_clicked_cb)
+        self._third_view.pack_start(self._icon_view, True, True, 0)
+        self._icon_view.show()
+
+        #self._volumes_toolbar = VolumesToolbar()
+        #self._volumes_toolbar.connect('volume-changed',
+        #                              self.__volume_changed_cb)
+        #self._volumes_toolbar.connect('volume-error', self.volume_error_cb)
+        #self._third_view.pack_start(self._volumes_toolbar, False, True, 0)
+
+        self._main1_toolbox.connect('iconview-unpressed', self.__iconview_removed_cb)
+
+        self._main1_toolbox.connect('query-changed', self._query_changed_cb)
+        self._main1_toolbox.search_entry.connect('icon-press',
+                                                self.__search_icon_pressed_cb)
+        self._main1_toolbox.set_mount_point(self._mount_point)
+        
+    #Prototype code ends ---
+
     def _setup_main_view(self):
         self._main_toolbox = MainToolbox()
+        #self._main_toolbox._iconview_button.set_active(False)
         self._edit_toolbox = EditToolbox(self)
         self._main_view = Gtk.VBox()
         self._main_view.set_can_focus(True)
@@ -265,6 +308,9 @@ class JournalActivity(JournalWindow):
         self._volumes_toolbar.connect('volume-error', self.volume_error_cb)
         self._main_view.pack_start(self._volumes_toolbar, False, True, 0)
 
+        #Prototype code starts ---
+        self._main_toolbox.connect('iconview-pressed', self.__iconview_clicked_cb)
+        #Prototype code ends ---
         self._main_toolbox.connect('query-changed', self._query_changed_cb)
         self._main_toolbox.search_entry.connect('icon-press',
                                                 self.__search_icon_pressed_cb)
@@ -290,6 +336,37 @@ class JournalActivity(JournalWindow):
             self._main_toolbox.clear_query()
             self.show_main_view()
 
+    #Prototype code starts ---
+    def __iconview_clicked_cb(self, toolbar):
+        #print "in journalactivity.py handler of iconview clicked"
+        self._show_third_view()
+
+    def __iconview_removed_cb(self, toolbar):
+        #print "in journalactivity.py handler of iconview removed"
+        self.show_main_view()
+
+    def _show_third_view(self):
+        #print "yooo!!"
+        self._main_view_active = False
+        if self._editing_mode:
+            self._toolbox = self._edit_toolbox
+            self._toolbox.set_total_number_of_entries(
+                self.get_total_number_of_entries())
+        else:
+            self._toolbox = self._main1_toolbox
+            self._toolbox._iconview_button.set_active(True)
+
+        self.set_toolbar_box(self._toolbox)
+        self._toolbox.show()
+
+        if self.canvas != self._third_view:
+            self.set_canvas(self._third_view)
+            self._third_view.show()
+
+    def __item_activated_cb(self, icon_view):
+        pass
+    #Prototype code ends ---
+
     def __detail_clicked_cb(self, list_view, object_id):
         self._show_secondary_view(object_id)
 
@@ -311,7 +388,17 @@ class JournalActivity(JournalWindow):
         self.show_main_view()
 
     def _query_changed_cb(self, toolbar, query):
+        #Prototype code starts ---
+        if not self._list_view:
+            self._setup_main_view()
+        #Prototype code ends ---
         self._list_view.update_with_query(query)
+
+        #Prototype code starts ---
+        if not self._icon_view:
+            self._setup_thumbnail_view()
+        self._icon_view.update_with_query(query)
+        #Prototype code ends ---
         self.show_main_view()
 
     def __search_icon_pressed_cb(self, entry, icon_pos, event):
@@ -331,6 +418,9 @@ class JournalActivity(JournalWindow):
                 self.get_total_number_of_entries())
         else:
             self._toolbox = self._main_toolbox
+            #Prototype code starts ---
+            self._toolbox._iconview_button.set_active(False)
+            #Prototype code ends ---
 
         self.set_toolbar_box(self._toolbox)
         self._toolbox.show()

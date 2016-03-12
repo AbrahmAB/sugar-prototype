@@ -21,7 +21,10 @@ from gettext import gettext as _
 from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GLib
-
+#Prototype code starts ---
+from jarabe.journal import misc
+from jarabe.journal import journalwindow
+#Prottype code ends ---
 from jarabe.journal.iconmodel import IconModel
 from sugar3.graphics.icon import Icon
 from jarabe.journal import model
@@ -69,6 +72,10 @@ class PreviewIconView(Gtk.IconView):
                                 self._preview_data_func, None)
 
         _title_renderer = Gtk.CellRendererText()
+        #Prototype code starts ---
+        _title_renderer.props.ellipsize = style.ELLIPSIZE_MODE_DEFAULT
+        _title_renderer.props.ellipsize_set = True
+        #Prototype code ends ---
         _title_renderer.set_alignment(0.5, 0.5)
         self.pack_start(_title_renderer, True)
         self.set_cell_data_func(_title_renderer,
@@ -101,7 +108,7 @@ class IconView(Gtk.Bin):
         self._toolbar = toolbar
 
         Gtk.Bin.__init__(self)
-
+        #print "heyy instance creattion"
         self.connect('map', self.__map_cb)
         self.connect('unrealize', self.__unrealize_cb)
         self.connect('destroy', self.__destroy_cb)
@@ -136,6 +143,15 @@ class IconView(Gtk.Bin):
         if path is None:
             return False
         uid = icon_view.get_model()[path][IconModel.COLUMN_UID]
+
+        #Prototype code starts ---
+        #print "Metadata here is:"
+        metadata_item = icon_view.get_model().get_metadata(path)
+        #print "End.."
+        misc.resume(metadata_item,
+                    alert_window=journalwindow.get_journal_window())
+        #Prototype code ends ---
+
         self.emit('entry-activated', uid)
         return False
 
@@ -152,6 +168,10 @@ class IconView(Gtk.Bin):
             self._set_dirty()
 
     def __model_updated_cb(self, sender, signal, object_id):
+        #Prototype code starts ---
+        #print "Is updated here in icon"
+        #Prototype code ends ---
+
         if self._is_new_item_visible(object_id):
             self._set_dirty()
 
@@ -181,6 +201,9 @@ class IconView(Gtk.Bin):
         self.refresh()
 
     def refresh(self):
+        #Prototype code starts ---
+        logging.debug('IconView.refresh query %r', self._query)
+        #Prototype code ends ---
         self._stop_progress_bar()
 
         if self._model is not None:
@@ -226,10 +249,17 @@ class IconView(Gtk.Bin):
         logging.debug('IconView.__map_cb %r', self._scroll_position)
         self.icon_view.props.vadjustment.props.value = self._scroll_position
         self.icon_view.props.vadjustment.value_changed()
+        #Prototyp code starts ---
+        self.set_is_visible(True)
+        #Prototyp code ends ---
 
     def __unrealize_cb(self, widget):
         self._scroll_position = self.icon_view.props.vadjustment.props.value
-        logging.debug('IconView.__map_cb %r', self._scroll_position)
+        # logging.debug('IconView.__map_cb %r', self._scroll_position)
+        #Prototyp code starts ---
+        logging.debug('IconView.__unrealize_cb %r', self._scroll_position)
+        self.set_is_visible(False)
+        #Prototyp code ends ---
 
     def _is_query_empty(self):
         # FIXME: This is a hack, we shouldn't have to update this every time
@@ -318,15 +348,24 @@ class IconView(Gtk.Bin):
 
     def _set_dirty(self):
         if self._fully_obscured:
+            #Prototype code starts ---
+            #print "fully obscured here icon"
+            #Prototype code ends ---
+
             self._dirty = True
         else:
+            #Prototype code starts ---
+            #print "is not obscured here icon"
+            #Prototype code ends ---
+
             self.refresh()
 
     def set_is_visible(self, visible):
         if visible != self._fully_obscured:
             return
-
-        logging.debug('canvas_visibility_notify_event_cb %r', visible)
+        #Prototyp code starts ---
+        logging.debug('canvas_visibility_notify_event_cb icon %r', visible)
+        #Prototyp code ends ---
         if visible:
             self._fully_obscured = False
             if self._dirty:

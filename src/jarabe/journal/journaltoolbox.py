@@ -44,7 +44,10 @@ from sugar3 import profile
 from sugar3.graphics.objectchooser import FILTER_TYPE_MIME_BY_ACTIVITY
 from sugar3.graphics.objectchooser import FILTER_TYPE_GENERIC_MIME
 from sugar3.graphics.objectchooser import FILTER_TYPE_ACTIVITY
-
+#prototype code starts ---
+#from sugar3.graphics.window import Window
+#from jarabe.journal.listview import ThumbnailView
+#prototype code ends ---
 from jarabe.model import bundleregistry
 from jarabe.journal import misc
 from jarabe.journal import model
@@ -78,6 +81,13 @@ class MainToolbox(ToolbarBox):
 
     query_changed_signal = GObject.Signal('query-changed',
                                           arg_types=([object]))
+    __gsignals__ = {
+        #Prototype code starts ---
+        'iconview-pressed': (GObject.SignalFlags.RUN_FIRST, None, ([])),
+    
+        'iconview-unpressed': (GObject.SignalFlags.RUN_FIRST, None, ([])),
+        #Prototype code ends ---
+    }
 
     def __init__(self, default_what_filter=None, default_filter_type=None):
         ToolbarBox.__init__(self)
@@ -98,6 +108,15 @@ class MainToolbox(ToolbarBox):
         self.search_entry.add_clear_button()
         self._autosearch_timer = None
         self._add_widget(self.search_entry, expand=True)
+
+        #Prototype code start---
+        
+        self._iconview_button = ToggleToolButton('emblem-question')
+        self._iconview_button.set_tooltip(_('Icon View'))
+        self._iconview_button.connect('toggled', self._iconview_button_toggled_cb)
+        self.toolbar.insert(self._iconview_button,-1)
+        self._iconview_button.show()
+        #Prototype code end ---
 
         self._favorite_button = ToggleToolButton('emblem-favorite')
         self._favorite_button.set_tooltip(_('Favorite entries'))
@@ -141,6 +160,16 @@ class MainToolbox(ToolbarBox):
         self.refresh_filters()
 
         self.connect('size_allocate', self.__size_allocate_cb)
+
+    #Prototype code starts ---
+    def _iconview_button_toggled_cb(self, iconview_button):
+        if self._iconview_button.props.active:
+            #print "pressed iconview..."
+            self.emit('iconview-pressed')
+        else:
+            #print "unpressed iconview..."
+            self.emit('iconview-unpressed')
+    #Prototype code end ---
 
     def __size_allocate_cb(self, widget, allocation):
         GObject.idle_add(self._update_buttons, allocation.width)
@@ -987,8 +1016,6 @@ class FilterToolItem(Gtk.ToolButton):
             invoker.draw_rectangle(cr, self.palette)
 
         return False
-if hasattr(FilterToolItem, 'set_css_name'):
-    FilterToolItem.set_css_name('filtertoolbutton')
 
 
 def set_palette_list(palette_list):
