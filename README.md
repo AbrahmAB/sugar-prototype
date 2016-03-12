@@ -1,25 +1,6 @@
-Sugar
-=====
+<h1>A Prototype for icon view in Journal.<h1>
 
-Sugar is the core component of a worldwide effort to provide every
-child with an equal opportunity for a quality education. Available in
-more than twenty-five languages, Sugar’s Activities are used every
-school day by children in more than forty countries.
-
-Originally developed for the One Laptop per Child XO-1 netbook, Sugar
-runs on most computers. Sugar is free/libre and open-source software.
-
-https://www.sugarlabs.org/
-
-https://wiki.sugarlabs.org/
-
-Hacking
--------
-
-For hacking you can use the sugar-build tool. Sugar is made of several
-modules and it often depends on libraries that have not yet been
-packaged in GNU/Linux distributions. To make it easier for developers to
-build from sources, we developed a set of scripts that automates builds
-and other common development tasks. 
-
-For details see: https://developer.sugarlabs.org/dev-environment.md.html
+__Features added:__<br>
+1. A toogle button in toolbar to switch between icon view and list view.<br>
+2. A new window that displays the entries in an icon view having only icons and titles.<br>
+3. Clicking on thumbnail or icon resumes the work/entry.<br>
