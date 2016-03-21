@@ -77,10 +77,6 @@ class ObjectChooser(Gtk.Window):
         self.emit('response', Gtk.ResponseType.DELETE_EVENT)
         self.destroy()
 
-    def __visibility_notify_event_cb(self, window, event):
-        logging.debug('objectchooser_desktop_visibility_notify_event_cb %r', self)
-        visible = event.get_state() == Gdk.VisibilityState.FULLY_OBSCURED
-        #self._list_view.set_is_visible(visible)
 
 class TitleBox(ToolbarBox):
     #__gtype_name__ = 'TitleBox'
