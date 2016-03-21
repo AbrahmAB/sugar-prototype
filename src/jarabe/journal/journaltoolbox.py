@@ -45,8 +45,7 @@ from sugar3.graphics.objectchooser import FILTER_TYPE_MIME_BY_ACTIVITY
 from sugar3.graphics.objectchooser import FILTER_TYPE_GENERIC_MIME
 from sugar3.graphics.objectchooser import FILTER_TYPE_ACTIVITY
 #prototype code starts ---
-#from sugar3.graphics.window import Window
-#from jarabe.journal.listview import ThumbnailView
+from jarabe.desktop.objectchooser import ObjectChooser
 #prototype code ends ---
 from jarabe.model import bundleregistry
 from jarabe.journal import misc
@@ -114,8 +113,14 @@ class MainToolbox(ToolbarBox):
         self._iconview_button = ToggleToolButton('emblem-question')
         self._iconview_button.set_tooltip(_('Icon View'))
         self._iconview_button.connect('toggled', self._iconview_button_toggled_cb)
-        self.toolbar.insert(self._iconview_button,-1)
+        self.toolbar.insert(self._iconview_button, -1)
         self._iconview_button.show()
+
+        add_item_button = ToolButton('list-add')
+        add_item_button.set_tooltip(_('Add Item'))
+        self.toolbar.insert(add_item_button, -1)
+        add_item_button.show()
+        add_item_button.connect('clicked',self.__add_item_cb)
         #Prototype code end ---
 
         self._favorite_button = ToggleToolButton('emblem-favorite')
@@ -169,6 +174,13 @@ class MainToolbox(ToolbarBox):
         else:
             #print "unpressed iconview..."
             self.emit('iconview-unpressed')
+
+    def __add_item_cb(self, button):
+        logging.debug('add item pressed')
+        chooser = ObjectChooser()
+        #result = chooser.run()
+        logging.debug('ended')
+        pass
     #Prototype code end ---
 
     def __size_allocate_cb(self, widget, allocation):
@@ -1016,6 +1028,7 @@ class FilterToolItem(Gtk.ToolButton):
             invoker.draw_rectangle(cr, self.palette)
 
         return False
+
 if hasattr(FilterToolItem, 'set_css_name'):
     FilterToolItem.set_css_name('filtertoolbutton')
 

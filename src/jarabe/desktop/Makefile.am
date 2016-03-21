@@ -17,4 +17,5 @@ sugar_PYTHON =			\
 	snowflakelayout.py	\
 	transitionbox.py	\
 	viewcontainer.py	\
-	viewtoolbar.py
+	viewtoolbar.py          \
+        objectchooser.py
