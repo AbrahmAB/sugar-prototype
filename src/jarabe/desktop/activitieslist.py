@@ -55,10 +55,9 @@ class ActivitiesTreeView(Gtk.TreeView):
 
     def __init__(self):
         Gtk.TreeView.__init__(self)
-        self.set_can_focus(False)
 
         self._query = ''
-
+        self._set_palette = True
         self.set_headers_visible(False)
         self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK |
                         Gdk.EventMask.TOUCH_MASK |
@@ -182,17 +181,25 @@ class ActivitiesTreeView(Gtk.TreeView):
     def do_row_activated(self, path, column):
         if column == self._icon_column:
             self._start_activity(path)
+    #Prototype code starts here ---
+    def set_palette(self, palette):
+        self._set_palette = palette
+    #Prototype code ends here ---
 
     def create_palette(self, path, column):
-        if column == self._icon_column:
-            row = self.get_model()[path]
-            bundle_id = row[self.get_model().column_bundle_id]
+        #Prototype code starts here ---
+        if self._set_palette:
+            if column == self._icon_column:
+                row = self.get_model()[path]
+                bundle_id = row[self.get_model().column_bundle_id]
 
-            registry = bundleregistry.get_registry()
-            palette = ActivityListPalette(registry.get_bundle(bundle_id))
-            palette.connect('erase-activated', self.__erase_activated_cb,
+                registry = bundleregistry.get_registry()
+                palette = ActivityListPalette(registry.get_bundle(bundle_id))
+                palette.connect('erase-activated', self.__erase_activated_cb,
                             bundle_id)
-            return palette
+                return palette
+        return None
+        #Prototype code ends here ---
 
     def __erase_activated_cb(self, palette, event, bundle_id):
         self.emit('erase-activated', bundle_id)
@@ -443,7 +450,6 @@ class ActivitiesList(Gtk.VBox):
         Gtk.VBox.__init__(self)
 
         self._scrolled_window = Gtk.ScrolledWindow()
-        self._scrolled_window.set_can_focus(False)
         self._scrolled_window.set_policy(Gtk.PolicyType.NEVER,
                                          Gtk.PolicyType.AUTOMATIC)
         self._scrolled_window.set_shadow_type(Gtk.ShadowType.NONE)
@@ -483,6 +489,11 @@ class ActivitiesList(Gtk.VBox):
         self._tree_view.connect('erase-activated', self.__erase_activated_cb)
         self._scrolled_window.add(self._tree_view)
         self._tree_view.show()
+
+    #Prototype code starts here ---
+    def set_palette(self, palette):
+        self._tree_view.set_palette(palette)
+    #Prototype code ends here ---
 
     def __key_press_event_cb(self, scrolled_window, event):
         keyname = Gdk.keyval_name(event.keyval)
