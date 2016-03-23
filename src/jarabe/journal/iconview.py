@@ -22,8 +22,12 @@ from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GLib
 #Prototype code starts ---
+from sugar3.graphics.palettewindow import TreeViewInvoker
+from gi.repository import Gdk
 from jarabe.journal import misc
 from jarabe.journal import journalwindow
+from sugar3.graphics.icon import Icon, CellRendererIcon
+from jarabe.journal.palettes import ObjectPalette
 #Prottype code ends ---
 from jarabe.journal.iconmodel import IconModel
 from sugar3.graphics.icon import Icon
@@ -32,7 +36,34 @@ from sugar3.graphics.objectchooser import get_preview_pixbuf
 from sugar3.graphics import style
 from sugar3.activity.activity import PREVIEW_SIZE
 
+#Prototype code starts ---
+'''
+class PreviewFavoriteRenderer(CellRendererIcon):
 
+    def __init__(self):
+        CellRendererIcon.__init__(self,None)
+        #self.props.width = style.GRID_CELL_SIZE
+        #self.props.height = style.GRID_CELL_SIZE
+        self.props.size = style.SMALL_ICON_SIZE
+        self.props.icon_name = 'emblem-favorite'
+        #self.props.prelit_fill_color = 
+
+    def set_preview_data(self, data):
+        self._preview_data = data
+
+    def do_render(self, cr, widget, background_area, cell_area, flags):
+        self.props.pixbuf = get_preview_pixbuf(self._preview_data)
+        Gtk.CellRendererPixbuf.do_render(self, cr, widget, background_area,
+                                         cell_area, flags)
+
+    def do_get_size(self, widget, cell_area):
+        x_offset, y_offset, width, height = Gtk.CellRendererPixbuf.do_get_size(
+            self, widget, cell_area)
+        width = PREVIEW_SIZE[0]
+        height = PREVIEW_SIZE[1]
+        return (x_offset, y_offset, width, height)
+#Prototype code ends ---
+'''
 class PreviewRenderer(Gtk.CellRendererPixbuf):
 
     def __init__(self, **kwds):
@@ -56,15 +87,30 @@ class PreviewRenderer(Gtk.CellRendererPixbuf):
 
 
 class PreviewIconView(Gtk.IconView):
+    __gsignals__ = {
+        'detail-clicked': (GObject.SignalFlags.RUN_FIRST, None,
+                           ([object])),
+        'volume-error': (GObject.SignalFlags.RUN_FIRST, None,
+                         ([str, str])),
+    }
 
-    def __init__(self, title_col, preview_col):
+    def __init__(self, title_col, preview_col, journalactivity):
         Gtk.IconView.__init__(self)
 
         self._preview_col = preview_col
         self._title_col = title_col
-
+       
         self.set_spacing(3)
-
+        #Prototype code starts ---
+        self._journalactivity = journalactivity
+        self._palette_invoker = TreeViewInvoker()
+        self._palette_invoker.attach_treeview(self)
+        #_favorite_renderer = PreviewFavoriteRenderer()
+        #_favorite_renderer.set_alignment(0.5, 0.5)
+        #self.pack_start(_favorite_renderer, False)
+        #self.set_cell_data_func(_favorite_renderer,
+        #                        self._favorite_data_func, None)
+        #Prototype code ends ---
         _preview_renderer = PreviewRenderer()
         _preview_renderer.set_alignment(0.5, 0.5)
         self.pack_start(_preview_renderer, False)
@@ -81,6 +127,11 @@ class PreviewIconView(Gtk.IconView):
         self.set_cell_data_func(_title_renderer,
                                 self._title_data_func, None)
 
+    #Prototype code starts ---
+    '''
+    def _favorite_data_func(self, view, cell, store, i, data):
+        cell.set_preview_data('emblem-favorite')'''
+    #Prototype code ends ---
     def _preview_data_func(self, view, cell, store, i, data):
         preview_data = store.get_value(i, self._preview_col)
         cell.set_preview_data(preview_data)
@@ -88,6 +139,40 @@ class PreviewIconView(Gtk.IconView):
     def _title_data_func(self, view, cell, store, i, data):
         title = store.get_value(i, self._title_col)
         cell.props.markup = title
+
+    def create_palette(self, path):
+        #Note: Use this prototype repo for sugar-toolkit-git3
+        # https://github.com/AbrahmAB/sugar-toolkit-gtk3-proto/tree/prototype
+        #
+        logging.debug('Pallete will be created')
+        #path = self.get_cursor()
+        metadata_item = self.get_model().get_metadata(path)
+        logging.debug('Path for palette is %r', metadata_item['title'])
+        palette = ObjectPalette(self._journalactivity, metadata_item, detail = True)
+        palette.connect('detail-clicked', self.__detail_clicked_cb)
+        palette.connect('volume-error', self.__volume_error_cb)
+        return palette
+
+    def get_palette_invoker(self):
+        return self._palette_invoker
+
+    palette_invoker = GObject.property(type = object, getter = get_palette_invoker)
+
+    def _scroll_start_cb(self, event):
+        self._invoker.detach()
+
+    def _scroll_end_cb(self, event):
+        self._invoker.attach_treeview(self)
+
+    def __detail_clicked_cb(self, palette, uid):
+        self.emit('detail-clicked', uid)
+
+    def __volume_error_cb(self, palette, message, severity):
+        self.emit('volume-error', message, severity)
+
+    def __del__(self):
+        self._invoker.detach()
+
 
 
 class IconView(Gtk.Bin):
@@ -97,16 +182,21 @@ class IconView(Gtk.Bin):
         'clear-clicked': (GObject.SignalFlags.RUN_FIRST, None, ([])),
         'entry-activated': (GObject.SignalFlags.RUN_FIRST,
                             None, ([str])),
+        'detail-clicked': (GObject.SignalFlags.RUN_FIRST, None,
+                           ([object])),
+        'volume-error': (GObject.SignalFlags.RUN_FIRST, None,
+                         ([str, str])),
+    
     }
 
-    def __init__(self, toolbar):
+    def __init__(self, toolbar, journalactivity):
         self._query = {}
         self._model = None
         self._progress_bar = None
         self._last_progress_bar_pulse = None
         self._scroll_position = 0.
         self._toolbar = toolbar
-
+        self._journalactivity = journalactivity
         Gtk.Bin.__init__(self)
         #print "heyy instance creattion"
         self.connect('map', self.__map_cb)
@@ -120,9 +210,11 @@ class IconView(Gtk.Bin):
         self._scrolled_window.show()
 
         self.icon_view = PreviewIconView(IconModel.COLUMN_TITLE,
-                                         IconModel.COLUMN_PREVIEW)
+                                         IconModel.COLUMN_PREVIEW,
+                                         self._journalactivity)
         self.icon_view.connect('item-activated', self.__item_activated_cb)
-
+        self.icon_view.connect('detail-clicked', self.__detail_clicked_cb)
+        self.icon_view.connect('volume-error', self.__volume_error_cb)
         self.icon_view.connect('button-release-event',
                                self.__button_release_event_cb)
 
@@ -139,21 +231,20 @@ class IconView(Gtk.Bin):
         model.deleted.connect(self.__model_deleted_cb)
 
     def __button_release_event_cb(self, icon_view, event):
-        path = icon_view.get_path_at_pos(int(event.x), int(event.y))
-        if path is None:
+        if event.button ==  Gdk.BUTTON_PRIMARY:
+            logging.debug('Activity resumes!')
+            path = icon_view.get_path_at_pos(int(event.x), int(event.y))
+            if path is None:
+                return False
+            uid = icon_view.get_model()[path][IconModel.COLUMN_UID]
+            metadata_item = icon_view.get_model().get_metadata(path)
+            misc.resume(metadata_item,
+                        alert_window=journalwindow.get_journal_window())
+            
+            self.emit('entry-activated', uid)
             return False
-        uid = icon_view.get_model()[path][IconModel.COLUMN_UID]
-
-        #Prototype code starts ---
-        #print "Metadata here is:"
-        metadata_item = icon_view.get_model().get_metadata(path)
-        #print "End.."
-        misc.resume(metadata_item,
-                    alert_window=journalwindow.get_journal_window())
-        #Prototype code ends ---
-
-        self.emit('entry-activated', uid)
-        return False
+        elif event.button == Gdk.BUTTON_SECONDARY:
+            return False
 
     def __item_activated_cb(self, icon_view, path):
         uid = icon_view.get_model()[path][IconModel.COLUMN_UID]
@@ -190,6 +281,12 @@ class IconView(Gtk.Bin):
         self.set_allocation(allocation)
         self.get_child().size_allocate(allocation)
 
+    def __detail_clicked_cb(self, palette, uid):
+        self.emit('detail-clicked', uid)
+
+    def __volume_error_cb(self, palette, message, severity):
+        self.emit('volume-error', message, severity)
+
     def __destroy_cb(self, widget):
         if self._model is not None:
             self._model.stop()
@@ -201,9 +298,7 @@ class IconView(Gtk.Bin):
         self.refresh()
 
     def refresh(self):
-        #Prototype code starts ---
         logging.debug('IconView.refresh query %r', self._query)
-        #Prototype code ends ---
         self._stop_progress_bar()
 
         if self._model is not None:
@@ -349,13 +444,13 @@ class IconView(Gtk.Bin):
     def _set_dirty(self):
         if self._fully_obscured:
             #Prototype code starts ---
-            #print "fully obscured here icon"
+            print "fully obscured here icon"
             #Prototype code ends ---
 
             self._dirty = True
         else:
             #Prototype code starts ---
-            #print "is not obscured here icon"
+            print "is not obscured here icon"
             #Prototype code ends ---
 
             self.refresh()

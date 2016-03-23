@@ -260,9 +260,11 @@ class JournalActivity(JournalWindow):
         self._third_view = Gtk.VBox()
         self._third_view.set_can_focus(True)
 
-        self._icon_view = IconView(self._main1_toolbox)
+        self._icon_view = IconView(self._main1_toolbox,self)
         
         #self._icon_view.connect('item-activated', self.__item_activated_cb)
+        self._icon_view.connect('detail-clicked', self.__detail_clicked_cb)
+        self._icon_view.connect('volume-error', self.volume_error_cb)
         self._icon_view.connect('clear-clicked', self.__clear_clicked_cb)
         self._third_view.pack_start(self._icon_view, True, True, 0)
         self._icon_view.show()
@@ -338,15 +340,15 @@ class JournalActivity(JournalWindow):
 
     #Prototype code starts ---
     def __iconview_clicked_cb(self, toolbar):
-        #print "in journalactivity.py handler of iconview clicked"
+        logging.debug("in journalactivity.py handler of iconview clicked")
         self._show_third_view()
 
     def __iconview_removed_cb(self, toolbar):
-        #print "in journalactivity.py handler of iconview removed"
+        logging.debug("in journalactivity.py handler of iconview removed")
         self.show_main_view()
 
     def _show_third_view(self):
-        #print "yooo!!"
+        print "yooo!!"
         self._main_view_active = False
         if self._editing_mode:
             self._toolbox = self._edit_toolbox
