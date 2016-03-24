@@ -37,11 +37,13 @@ class IconModel(GObject.GObject, Gtk.TreeModel, Gtk.TreeDragSource):
     COLUMN_UID = 0
     COLUMN_TITLE = 1
     COLUMN_PREVIEW = 2
+    COLUMN_FAVORITE = 3
 
     _COLUMN_TYPES = {
         COLUMN_UID: str,
         COLUMN_TITLE: str,
         COLUMN_PREVIEW: str,
+        COLUMN_FAVORITE: bool,
     }
 
     _PAGE_SIZE = 100
@@ -111,6 +113,8 @@ class IconModel(GObject.GObject, Gtk.TreeModel, Gtk.TreeDragSource):
         self._cached_row.append(title)
 
         self._cached_row.append(metadata.get('preview', ''))
+
+        self._cached_row.append(metadata.get('keep', '0') == '1')
 
         return self._cached_row[column]
 

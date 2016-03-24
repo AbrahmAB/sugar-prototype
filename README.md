@@ -9,13 +9,15 @@ Features added:</br>
 4. Right click on any icon will open popdown a palette.
 
 ScreenShot:
-![Icon_view](https://github.com/AbrahmAB/sugar-prototype/blob/prototype/screenshots/icon_view.png)
+![Icon_view](https://github.com/AbrahmAB/sugar-prototype/blob/prototype/screenshots/icon_view_journal_stars.png)
 
 <h2>A Prototype for icon view in Journal.</h2>
-Features added:
+Features added:<br>
 1. A toolbutton to main toolbar to open the File-Chooser view of Home View.<br>
-2. A new dailog window pops up with the list of activities.
-3. CLicking on the icon of activity starts the activity.
+2. A new dailog window pops up with the list of activities.<br>
+3. Favorite indicator at the top of every preview.<br>
+4. Clicking on the icon of activity starts the activity.<br>
+
 
 ScreenShot:
 ![File_choose_view](https://github.com/AbrahmAB/sugar-prototype/blob/prototype/screenshots/File_chooser_view.png)

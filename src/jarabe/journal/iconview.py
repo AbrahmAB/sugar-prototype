@@ -22,6 +22,7 @@ from gi.repository import GObject
 from gi.repository import Gtk
 from gi.repository import GLib
 #Prototype code starts ---
+from sugar3 import profile
 from sugar3.graphics.palettewindow import TreeViewInvoker
 from gi.repository import Gdk
 from jarabe.journal import misc
@@ -37,33 +38,24 @@ from sugar3.graphics import style
 from sugar3.activity.activity import PREVIEW_SIZE
 
 #Prototype code starts ---
-'''
+
 class PreviewFavoriteRenderer(CellRendererIcon):
 
+    #__gtype_name__ = 'JournalCellRendererFavorite'
+
     def __init__(self):
-        CellRendererIcon.__init__(self,None)
-        #self.props.width = style.GRID_CELL_SIZE
-        #self.props.height = style.GRID_CELL_SIZE
+        CellRendererIcon.__init__(self)
+
+        self.props.width = style.GRID_CELL_SIZE
+        self.props.height = style.GRID_CELL_SIZE
         self.props.size = style.SMALL_ICON_SIZE
         self.props.icon_name = 'emblem-favorite'
-        #self.props.prelit_fill_color = 
+        self.props.sensitive = False
 
-    def set_preview_data(self, data):
-        self._preview_data = data
-
-    def do_render(self, cr, widget, background_area, cell_area, flags):
-        self.props.pixbuf = get_preview_pixbuf(self._preview_data)
-        Gtk.CellRendererPixbuf.do_render(self, cr, widget, background_area,
-                                         cell_area, flags)
-
-    def do_get_size(self, widget, cell_area):
-        x_offset, y_offset, width, height = Gtk.CellRendererPixbuf.do_get_size(
-            self, widget, cell_area)
-        width = PREVIEW_SIZE[0]
-        height = PREVIEW_SIZE[1]
-        return (x_offset, y_offset, width, height)
+        
 #Prototype code ends ---
-'''
+     
+
 class PreviewRenderer(Gtk.CellRendererPixbuf):
 
     def __init__(self, **kwds):
@@ -94,12 +86,12 @@ class PreviewIconView(Gtk.IconView):
                          ([str, str])),
     }
 
-    def __init__(self, title_col, preview_col, journalactivity):
+    def __init__(self, title_col, preview_col, fav_col, journalactivity):
         Gtk.IconView.__init__(self)
 
         self._preview_col = preview_col
         self._title_col = title_col
-       
+        self._fav_col = fav_col
         self.set_spacing(3)
         #Prototype code starts ---
         self._journalactivity = journalactivity
@@ -111,6 +103,12 @@ class PreviewIconView(Gtk.IconView):
         #self.set_cell_data_func(_favorite_renderer,
         #                        self._favorite_data_func, None)
         #Prototype code ends ---
+        _favorite_renderer = PreviewFavoriteRenderer()
+        _favorite_renderer.set_alignment(0.5, 0.5)
+        self.pack_start(_favorite_renderer, False)
+        self.set_cell_data_func(_favorite_renderer,
+                                self._favorite_data_func, None)
+
         _preview_renderer = PreviewRenderer()
         _preview_renderer.set_alignment(0.5, 0.5)
         self.pack_start(_preview_renderer, False)
@@ -128,9 +126,15 @@ class PreviewIconView(Gtk.IconView):
                                 self._title_data_func, None)
 
     #Prototype code starts ---
-    '''
     def _favorite_data_func(self, view, cell, store, i, data):
-        cell.set_preview_data('emblem-favorite')'''
+        favorite = store.get_value(i, self._fav_col)
+        logging.debug('face off %r',favorite)
+        if favorite:
+            logging.debug('face off')
+            cell.props.xo_color = profile.get_color()
+        else:
+            cell.props.xo_color = None
+
     #Prototype code ends ---
     def _preview_data_func(self, view, cell, store, i, data):
         preview_data = store.get_value(i, self._preview_col)
@@ -141,9 +145,6 @@ class PreviewIconView(Gtk.IconView):
         cell.props.markup = title
 
     def create_palette(self, path):
-        #Note: Use this prototype repo for sugar-toolkit-git3
-        # https://github.com/AbrahmAB/sugar-toolkit-gtk3-proto/tree/prototype
-        #
         logging.debug('Pallete will be created')
         #path = self.get_cursor()
         metadata_item = self.get_model().get_metadata(path)
@@ -211,6 +212,7 @@ class IconView(Gtk.Bin):
 
         self.icon_view = PreviewIconView(IconModel.COLUMN_TITLE,
                                          IconModel.COLUMN_PREVIEW,
+                                         IconModel.COLUMN_FAVORITE,
                                          self._journalactivity)
         self.icon_view.connect('item-activated', self.__item_activated_cb)
         self.icon_view.connect('detail-clicked', self.__detail_clicked_cb)
